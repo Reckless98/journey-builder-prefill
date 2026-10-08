@@ -91,6 +91,14 @@ describe('buildSections', () => {
 
     expect(buildSections([emptyGroupProvider], contextFor('Form D'))[0]?.groups).toEqual([]);
   });
+
+  it('offers a source once, under the first provider that returns it', () => {
+    const copy = { ...directDependenciesProvider, id: 'copy', label: 'Copy' };
+    const [first, second] = buildSections([directDependenciesProvider, copy], contextFor('Form D'));
+
+    expect(first?.groups[0]?.options).toHaveLength(8);
+    expect(second?.groups).toEqual([]);
+  });
 });
 
 describe('indexOptions', () => {
@@ -148,15 +156,6 @@ describe('indexOptions', () => {
       groupLabel: 'Owner of Form D',
       option: { source: { type: 'team_member', ownerId: 'owner', key: 'email' }, label: 'Email' },
     });
-  });
-
-  it('lets the earlier provider describe a source two providers offer', () => {
-    const sections = buildSections(
-      [directDependenciesProvider, { ...directDependenciesProvider, id: 'copy', label: 'Copy' }],
-      contextFor('Form D'),
-    );
-
-    expect(indexOptions(sections).size).toBe(8);
   });
 });
 
