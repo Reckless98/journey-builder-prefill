@@ -4,7 +4,7 @@ import { MOCK_FORM_ID } from '../test/apiFixtures';
 import { formNamed, mockBlueprint } from '../test/builders';
 import { directDependenciesProvider, transitiveDependenciesProvider } from './formDependencies';
 import { globalDataProvider, globalSource } from './globalData';
-import { defaultPrefillProviders } from './registry';
+import { allPrefillProviders } from './registry';
 import { buildSections, filterSections, indexOptions, type PrefillSection } from './sections';
 import type { PrefillSourceProvider } from './types';
 
@@ -37,7 +37,7 @@ const teamProvider: PrefillSourceProvider = {
 
 describe('buildSections', () => {
   it('returns one section per default provider, in registry order', () => {
-    const sections = buildSections(defaultPrefillProviders, contextFor('Form D'));
+    const sections = buildSections(allPrefillProviders, contextFor('Form D'));
 
     expect(sectionLabels(sections)).toEqual([
       'Direct dependencies',
@@ -66,17 +66,14 @@ describe('buildSections', () => {
   });
 
   it('includes a provider it has never seen without any other change', () => {
-    const sections = buildSections(
-      [...defaultPrefillProviders, teamProvider],
-      contextFor('Form D'),
-    );
+    const sections = buildSections([...allPrefillProviders, teamProvider], contextFor('Form D'));
 
     expect(sectionLabels(sections)).toContain('Team');
     expect(groupLabels(sections)).toContain('Owner of Form D');
   });
 
   it('keeps the section of a provider that has nothing to offer, with no groups', () => {
-    const [direct, transitive] = buildSections(defaultPrefillProviders, contextFor('Form A'));
+    const [direct, transitive] = buildSections(allPrefillProviders, contextFor('Form A'));
 
     expect(direct).toMatchObject({ providerId: 'direct-dependencies', groups: [] });
     expect(transitive).toMatchObject({ providerId: 'transitive-dependencies', groups: [] });
@@ -102,7 +99,7 @@ describe('buildSections', () => {
 });
 
 describe('indexOptions', () => {
-  const indexFor = (formName: string, providers = defaultPrefillProviders) =>
+  const indexFor = (formName: string, providers = allPrefillProviders) =>
     indexOptions(buildSections(providers, contextFor(formName)));
 
   it('describes a stored form field source by its form and field', () => {
@@ -150,7 +147,7 @@ describe('indexOptions', () => {
   });
 
   it('resolves the sources of a provider added later', () => {
-    const index = indexFor('Form D', [...defaultPrefillProviders, teamProvider]);
+    const index = indexFor('Form D', [...allPrefillProviders, teamProvider]);
 
     expect(index.get(sourceId({ type: 'team_member', ownerId: 'owner', key: 'email' }))).toEqual({
       groupLabel: 'Owner of Form D',
@@ -160,7 +157,7 @@ describe('indexOptions', () => {
 });
 
 describe('filterSections', () => {
-  const sections = buildSections(defaultPrefillProviders, contextFor('Form D'));
+  const sections = buildSections(allPrefillProviders, contextFor('Form D'));
 
   it('returns the sections unchanged for an empty or blank query', () => {
     expect(filterSections(sections, '')).toBe(sections);
