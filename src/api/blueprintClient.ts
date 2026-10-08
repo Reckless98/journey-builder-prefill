@@ -1,4 +1,5 @@
 import type { BlueprintGraphResponse } from './types';
+import { isBlueprintGraphResponse } from './validateBlueprint';
 
 export interface BlueprintRequest {
   baseUrl: string;
@@ -52,15 +53,4 @@ export async function fetchBlueprintGraph(
     throw new Error('The API response is not a blueprint graph.');
   }
   return body;
-}
-
-/**
- * Checks the envelope only: the three collections the app reads exist and are arrays or null,
- * as the schema allows. Their contents are trusted to follow the schema, and references
- * between them are verified in `normalizeBlueprint`.
- */
-function isBlueprintGraphResponse(value: unknown): value is BlueprintGraphResponse {
-  if (typeof value !== 'object' || value === null) return false;
-  const { nodes, edges, forms } = value as Record<string, unknown>;
-  return [nodes, edges, forms].every((list) => list === null || Array.isArray(list));
 }
