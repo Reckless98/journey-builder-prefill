@@ -133,6 +133,18 @@ describe('loading the blueprint', () => {
     );
   });
 
+  it('shows a readable error for malformed nested data and can retry', async () => {
+    stubFetch(respondWith({ ...apiResponse(), nodes: [null] }), respondWith(mockServerResponse()));
+    const user = userEvent.setup();
+    render(<App request={request} />);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'The API response is not a blueprint graph.',
+    );
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(await screen.findByRole('navigation', { name: 'Forms' })).toBeInTheDocument();
+  });
+
   it('says so when the blueprint has no forms', async () => {
     stubFetch(respondWith(apiResponse({ name: 'Empty journey' })));
     render(<App request={request} />);
