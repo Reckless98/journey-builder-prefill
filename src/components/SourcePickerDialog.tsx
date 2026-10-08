@@ -112,7 +112,7 @@ export function SourcePickerDialog({
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search by form, data set or field"
-              className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+              className="w-full bg-transparent text-sm outline-none placeholder:text-slate-500"
             />
           </label>
         </div>
@@ -215,7 +215,7 @@ function OptionRow({ id, option, checked, onChoose }: OptionRowProps) {
         className="size-4 shrink-0 accent-indigo-600 outline-none"
       />
       <span className="min-w-0 flex-1 font-medium">{option.label}</span>
-      <code className="max-w-[45%] truncate font-mono text-xs text-slate-500">
+      <code className="max-w-[45%] truncate font-mono text-xs text-slate-600">
         {option.source.key}
       </code>
       {option.valueType && (

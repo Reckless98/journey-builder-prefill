@@ -310,6 +310,101 @@ describe('normalizeBlueprint', () => {
       'Literal escape',
     ]);
   });
+
+  it('decodes URI fragments once before resolving JSON Pointer escapes', () => {
+    const blueprint = normalizeBlueprint(
+      apiResponse({
+        nodes: [apiNode('a', 'Form A', 'f')],
+        forms: [
+          {
+            id: 'f',
+            field_schema: {
+              properties: {
+                'space key': {},
+                café: {},
+                'percent%key': {},
+                'space%20key': {},
+                'a/b': {},
+                'literal~1': {},
+              },
+            },
+            ui_schema: {
+              elements: [
+                { scope: '#/properties/space%20key', label: 'Space label' },
+                { scope: '#/properties/caf%C3%A9', label: 'Unicode label' },
+                { scope: '#/properties/percent%25key', label: 'Percent label' },
+                { scope: '#/properties/space%2520key', label: 'Encoded text label' },
+                { scope: '#/properties/a%7E1b', label: 'Slash label' },
+                { scope: '#/properties/literal%7E01', label: 'Literal escape label' },
+              ],
+            },
+          },
+        ],
+      }),
+    );
+
+    expect(blueprint.forms[0]?.fields.map((field) => field.label)).toEqual([
+      'Space label',
+      'Unicode label',
+      'Percent label',
+      'Encoded text label',
+      'Slash label',
+      'Literal escape label',
+    ]);
+  });
+
+  it('resolves a UI label for an empty property key', () => {
+    const blueprint = normalizeBlueprint(
+      apiResponse({
+        nodes: [apiNode('a', 'Form A', 'f')],
+        forms: [
+          {
+            id: 'f',
+            field_schema: { properties: { '': {} } },
+            ui_schema: { elements: [{ scope: '#/properties/', label: 'Empty key label' }] },
+          },
+        ],
+      }),
+    );
+
+    expect(blueprint.forms[0]?.fields[0]).toMatchObject({ key: '', label: 'Empty key label' });
+  });
+
+  it('ignores malformed fragments and nested pointers without losing valid nested UI labels', () => {
+    const blueprint = normalizeBlueprint(
+      apiResponse({
+        nodes: [apiNode('a', 'Form A', 'f')],
+        forms: [
+          {
+            id: 'f',
+            field_schema: {
+              properties: { 'bad%key': {}, 'bad%C3%28': {}, 'a/b': {}, valid: {}, bare: {} },
+            },
+            ui_schema: {
+              elements: [
+                {
+                  scope: '#/properties/bad%key',
+                  label: 'Malformed percent escape',
+                  elements: [{ scope: '#/properties/valid', label: 'Valid nested UI label' }],
+                },
+                { scope: '#/properties/bad%C3%28', label: 'Malformed UTF-8' },
+                { scope: '#/properties/a%2Fb', label: 'Nested pointer' },
+                { scope: '%23/properties/bare', label: 'Not a URI fragment' },
+              ],
+            },
+          },
+        ],
+      }),
+    );
+
+    expect(blueprint.forms[0]?.fields.map((field) => field.label)).toEqual([
+      'bad%key',
+      'bad%C3%28',
+      'a/b',
+      'Valid nested UI label',
+      'bare',
+    ]);
+  });
 });
 
 describe('normalizeBlueprint reading stored input mappings', () => {
