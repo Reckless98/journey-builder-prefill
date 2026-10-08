@@ -20,15 +20,32 @@ export interface ResolvedOption {
   option: PrefillOption;
 }
 
-/** Asks every provider what it offers for `context.form`. One section per provider, in order. */
+/**
+ * Asks every provider what it offers for `context.form`. One section per provider, in order.
+ *
+ * Each source is offered once: when two providers return the same source, the earlier one
+ * keeps it. Source ids are therefore unique across all sections, which the picker and
+ * `indexOptions` rely on.
+ */
 export function buildSections(
   providers: readonly PrefillSourceProvider[],
   context: PrefillContext,
 ): PrefillSection[] {
+  const offered = new Set<string>();
+  const isFirstOffer = (option: PrefillOption) => {
+    const id = sourceId(option.source);
+    if (offered.has(id)) return false;
+    offered.add(id);
+    return true;
+  };
+
   return providers.map((provider) => ({
     providerId: provider.id,
     label: provider.label,
-    groups: provider.getGroups(context).filter((group) => group.options.length > 0),
+    groups: provider
+      .getGroups(context)
+      .map((group) => ({ ...group, options: group.options.filter(isFirstOffer) }))
+      .filter((group) => group.options.length > 0),
   }));
 }
 
@@ -37,16 +54,14 @@ export function buildSections(
  *
  * A stored mapping is valid for a form exactly when its source is in this index. Lookup is by
  * source identity, never by label, so "Email" of one form cannot stand in for "Email" of another
- * and a mapping whose source is no longer upstream resolves to nothing. If two providers offer
- * the same source, the earlier provider describes it.
+ * and a mapping whose source is no longer upstream resolves to nothing.
  */
 export function indexOptions(sections: readonly PrefillSection[]): Map<string, ResolvedOption> {
   const index = new Map<string, ResolvedOption>();
   for (const section of sections) {
     for (const group of section.groups) {
       for (const option of group.options) {
-        const id = sourceId(option.source);
-        if (!index.has(id)) index.set(id, { groupLabel: group.label, option });
+        index.set(sourceId(option.source), { groupLabel: group.label, option });
       }
     }
   }
