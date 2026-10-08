@@ -1,4 +1,5 @@
-import { sourceId } from '../domain/mappings';
+import { getDirectDependencies, getTransitiveDependencies } from '../domain/graph';
+import { FORM_FIELD_SOURCE, formFieldSource, sourceId } from '../domain/mappings';
 import type {
   PrefillContext,
   PrefillOption,
@@ -23,6 +24,7 @@ export interface ResolvedOption {
 /**
  * Asks every provider what it offers for `context.form`. One section per provider, in order.
  *
+ * Form-field sources must still exist upstream, even when offered by a custom provider.
  * Each source is offered once: when two providers return the same source, the earlier one
  * keeps it. Source ids are therefore unique across all sections, which the picker and
  * `indexOptions` rely on.
@@ -31,9 +33,21 @@ export function buildSections(
   providers: readonly PrefillSourceProvider[],
   context: PrefillContext,
 ): PrefillSection[] {
+  const upstream = new Set([
+    ...getDirectDependencies(context.blueprint.dependencies, context.form.id),
+    ...getTransitiveDependencies(context.blueprint.dependencies, context.form.id),
+  ]);
+  const eligibleFormSources = new Set(
+    context.blueprint.forms
+      .filter((form) => upstream.has(form.id))
+      .flatMap((form) => form.fields.map((field) => sourceId(formFieldSource(form.id, field.key)))),
+  );
   const offered = new Set<string>();
   const isFirstOffer = (option: PrefillOption) => {
     const id = sourceId(option.source);
+    // Availability is also used to resolve stored mappings. A provider such as favorites can
+    // hold stale pointers, so it cannot bypass the graph or resurrect a removed field.
+    if (option.source.type === FORM_FIELD_SOURCE && !eligibleFormSources.has(id)) return false;
     if (offered.has(id)) return false;
     offered.add(id);
     return true;

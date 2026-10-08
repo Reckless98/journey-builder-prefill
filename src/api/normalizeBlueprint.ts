@@ -21,8 +21,8 @@ const FORM_NODE_TYPE = 'form';
 /**
  * The adapter between the API and the app: turns a raw graph response into the domain model.
  *
- * It never throws on inconsistent data. References that do not resolve are dropped and
- * described in `warnings`, so one bad edge or mapping cannot take the whole editor down.
+ * After the client validates the response structure, references that do not resolve are
+ * dropped and described in `warnings`, so one bad edge or mapping cannot take the editor down.
  */
 export function normalizeBlueprint(response: BlueprintGraphResponse): Blueprint {
   const warnings: string[] = [];
@@ -130,7 +130,9 @@ function collectUiLabels(
   labels = new Map<string, string>(),
 ): Map<string, string> {
   for (const element of elements ?? []) {
-    const key = /^#\/properties\/(.+)$/.exec(element.scope ?? '')?.[1];
+    const token = /^#\/properties\/([^/]+)$/.exec(element.scope ?? '')?.[1];
+    // JSON Pointer escapes one property token: decode ~1 before ~0 so ~01 stays literal ~1.
+    const key = token?.replace(/~1/g, '/').replace(/~0/g, '~');
     if (key && element.label) labels.set(key, element.label);
     collectUiLabels(element.elements, labels);
   }
