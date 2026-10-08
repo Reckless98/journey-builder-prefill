@@ -24,7 +24,8 @@ of a form it depends on transitively, or global data.
 
 ## Run it locally
 
-You need Node.js 20.19 or newer and two terminals.
+Use Node.js 22.13+ (22.x), 24.x, or 26+. The locked Vitest 5 release does not support Node 20
+or odd-numbered Node 23/25 releases. CI uses Node 22. You need two terminals.
 
 **1. Start the mock server** (it has no dependencies to install):
 
@@ -40,7 +41,7 @@ npm start
 ```bash
 git clone https://github.com/Reckless98/journey-builder-prefill.git
 cd journey-builder-prefill
-npm install
+npm ci
 npm run dev
 # open http://localhost:5173
 ```
@@ -210,22 +211,24 @@ builds the URL and fetches. `normalizeBlueprint.ts` converts the response into a
 **How.**
 
 - The client builds `/api/v1/{tenant}/actions/blueprints/{id}[/{version}]/graph`, fetches it, and
-  turns the three ways it can go wrong (unreachable server, error status, a body that is not a
-  graph) into errors with a message fit to show.
+  turns unreachable servers, error statuses and invalid response structure into errors with a
+  message fit to show. `validateBlueprint.ts` checks the nested shapes the adapter reads,
+  allowing unknown keys; it does not validate the entire published API contract.
 - The adapter keeps only `form` nodes in the form list but keeps every node in the dependency
   map, so a chain through a non-form node is still followed. It reads each form's fields from
   the JSON Schema of its definition, labels them with the schema `title`, then the UI schema
   `label`, then the key, and sorts forms by name.
 - It builds dependencies from `edges`, reading `source → target` as "target depends on source".
-- It never throws on inconsistent data. A dangling edge, a missing form definition, a duplicate
-  node id or an input mapping it cannot interpret is dropped and described in
+- After the client validates structure, the adapter tolerates inconsistent references. A
+  dangling edge, a missing form definition, a duplicate node id or an input mapping it cannot
+  interpret is dropped and described in
   `blueprint.warnings`, which the UI shows in a collapsible notice.
 
 **Why.** One boundary means one place to change when the API changes, and it lets the rest of the
 code assume clean data. Edge direction is the easiest thing to get backwards, so it is not
 assumed: a test checks, on the real mock response, that each node's `prerequisites` are exactly
 the sources of the edges that target it. There is no schema validation library because there is
-one endpoint: the envelope is checked by hand and references are verified by the adapter.
+one endpoint: consumed shapes are checked by hand and references are verified by the adapter.
 
 ### 5. Prefill sources: `src/prefill-sources/`
 
@@ -253,7 +256,9 @@ carries the `PrefillSource` to store.
 | `registry.ts`         | `allPrefillProviders`, the single list of known providers, and `selectPrefillProviders` to pick a subset.     |
 | `sections.ts`         | `buildSections` asks every provider and returns one section each; `indexOptions` and `filterSections` on top. |
 
-`buildSections` is the only place providers are called. Its output, `PrefillSection[]`, is plain
+`buildSections` is the only place providers are called. It checks every `form_field` source
+against existing upstream fields, including sources returned by a custom provider such as saved
+favorites. Other source types remain open for extension. Its output, `PrefillSection[]`, is plain
 data, and it is all the UI ever sees.
 
 **Why.** The components contain no `if (direct) … else if (global) …`. They render sections,
@@ -276,8 +281,9 @@ or `ready`. `usePrefillMappings(initial)` returns the mappings and stable `setMa
 
 **How.** `useBlueprint` fetches in an effect with an `AbortController`. It stores the outcome
 together with the request it belongs to and derives "loading" from whether the stored outcome is
-for the current request. `usePrefillMappings` is `useState` plus the pure functions from the
-domain, called through functional updates.
+for the current request. Each URL transition gets a new identity, so a quick A → B → A switch
+also loads again instead of reusing a stale outcome. `usePrefillMappings` is `useState` plus the
+pure functions from the domain, called through functional updates.
 
 **Why.** Deriving the loading state means a new request can never show the previous one's data
 and there is nothing to reset by hand. Aborting on cleanup drops stale answers, including the
@@ -380,15 +386,16 @@ Things to know when writing one:
 npm test
 ```
 
-150 tests in 10 files, run with Vitest and React Testing Library.
+168 tests in 11 files, run with Vitest and React Testing Library.
 
 | File                             | What it proves                                                                                                                                                       |
 | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `domain/graph.test.ts`           | Direct and transitive dependencies; chains; branching; diamonds; independent graphs; unknown ids; self-loops; cycles; no dependence on declaration order.            |
 | `domain/mappings.test.ts`        | Set, replace, clear; immutability; other forms untouched by identity; source ids that cannot collide; prototype-named keys.                                          |
 | `api/normalizeBlueprint.test.ts` | The real mock response end to end; edge direction against `prerequisites`; both API naming variants; malformed references; reading stored input mappings.            |
-| `api/blueprintClient.test.ts`    | URL building for the mock and the published API; error status, unreachable server, non-graph bodies, aborts.                                                         |
+| `api/blueprintClient.test.ts`    | URL building; error status, unreachable server, malformed nested response shapes, real mock acceptance, aborts.                                                      |
 | `prefill-sources/*.test.ts`      | Each provider; every combination and order; a provider added later; identity across forms that share a definition; unresolvable sources; search; provider selection. |
+| `hooks/useBlueprint.test.ts`     | Abort on request change/unmount; late responses; fresh loading on A → B → A even when B is pending.                                                                  |
 | `App.test.tsx`                   | The app as a user sees it: load, select a form, open the picker, add, replace, clear, cancel, switch forms, stored and stale mappings, error and retry, empty.       |
 
 How they are written:
@@ -421,7 +428,10 @@ How they are written:
 ## What the API actually returns
 
 Worth knowing before extending this, because the mock server and the published OpenAPI document
-disagree in places. All of it was checked against a running mock server.
+differ in places. The mock GET, 404 for writes and versioned URLs, and fixture contents were
+independently verified against the running server. The published-schema notes below could not
+be rechecked during the final audit because the docs returned HTTP 403; verify those details
+before using the production API.
 
 - **Path.** The mock serves `/api/v1/{tenant}/actions/blueprints/{id}/graph`. The published API
   adds a `{blueprint_version_id}` segment, which the mock answers with 404. The client supports
@@ -451,5 +461,7 @@ disagree in places. All of it was checked against a running mock server.
 - **The picker renders every option.** Fine for hundreds; thousands would want virtualisation.
 - **Outside click closes the picker only where `closedby` is supported.** Elsewhere Escape, Cancel
   and the close button still work.
-- **No automated browser test.** The UI tests run in jsdom; real-browser behaviour was verified
-  manually, in Chromium only.
+- **No browser suite in CI.** The UI tests run in jsdom. The original implementation was
+  manually checked in Chromium; the final audit could not repeat that check because headless
+  Chromium exited at launch. Native Escape, focus trapping, light dismiss and responsive layouts
+  still need a browser check. Firefox and Safari have not been verified.
