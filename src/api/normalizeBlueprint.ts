@@ -105,7 +105,6 @@ function toFormNode(
     id: node.id,
     name: node.data.name,
     definitionId: node.data.component_id,
-    definitionName: definition?.name,
     fields: definition ? toFields(definition) : [],
   };
 }

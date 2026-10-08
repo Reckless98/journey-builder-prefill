@@ -48,7 +48,6 @@ export interface ApiEdge {
 /** A reusable form definition. Several nodes can point at the same one. */
 export interface ApiForm {
   id: string;
-  name?: string;
   field_schema?: ApiFieldSchema | null;
   ui_schema?: ApiUiSchema | null;
 }

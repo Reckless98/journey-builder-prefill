@@ -28,7 +28,6 @@ export interface FormNode {
    * so this must never be used to tell forms apart.
    */
   definitionId: string;
-  definitionName: string | undefined;
   fields: readonly FormField[];
 }
 

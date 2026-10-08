@@ -78,7 +78,6 @@ function isForm(value: unknown): boolean {
   return (
     isRecord(value) &&
     isString(value.id) &&
-    optionalString(value.name) &&
     isFieldSchema(value.field_schema) &&
     isUiSchema(value.ui_schema)
   );

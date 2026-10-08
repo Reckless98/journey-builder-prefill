@@ -50,7 +50,6 @@ describe('normalizeBlueprint with the mock server response', () => {
   it('reads the fields of a form from its definition, in schema order', () => {
     const formA = blueprint.forms.find((form) => form.id === MOCK_FORM_ID.A);
 
-    expect(formA?.definitionName).toBe('test form');
     expect(formA?.fields).toEqual([
       { key: 'button', label: 'Button', type: 'button', required: false },
       {
