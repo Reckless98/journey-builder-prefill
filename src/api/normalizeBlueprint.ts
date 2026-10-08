@@ -43,15 +43,18 @@ export function normalizeBlueprint(response: BlueprintGraphResponse): Blueprint 
     (a, b) => a.name.localeCompare(b.name, 'en', { numeric: true }) || a.id.localeCompare(b.id),
   );
 
+  const dependencies = toDependencyMap(nodes, response.edges ?? [], warnings);
   const description = response.description?.trim();
+
   return {
     id: response.blueprint_id ?? response.id ?? '',
     name: response.blueprint_name ?? response.name ?? 'Untitled blueprint',
     description: description === '' ? undefined : description,
     forms,
-    dependencies: toDependencyMap(nodes, response.edges ?? [], warnings),
+    dependencies,
     prefill,
-    warnings,
+    // Repeating an identical note adds nothing, and the UI lists them by their text.
+    warnings: [...new Set(warnings)],
   };
 }
 

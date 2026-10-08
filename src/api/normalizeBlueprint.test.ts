@@ -171,6 +171,21 @@ describe('normalizeBlueprint', () => {
     expect(blueprint.warnings[1]).toContain('"a" → "phantom"');
   });
 
+  it('reports the same problem once', () => {
+    const blueprint = normalizeBlueprint(
+      apiResponse({
+        nodes: [apiNode('b', 'Form B')],
+        edges: [
+          { source: 'ghost', target: 'b' },
+          { source: 'ghost', target: 'b' },
+        ],
+        forms: [apiForm('f_default')],
+      }),
+    );
+
+    expect(blueprint.warnings).toHaveLength(1);
+  });
+
   it('collapses duplicate edges and ignores an edge from a node to itself', () => {
     const blueprint = normalizeBlueprint(
       apiResponse({
