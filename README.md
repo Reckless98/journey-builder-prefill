@@ -25,11 +25,16 @@ git clone https://github.com/mosaic-avantos/frontendchallengeserver.git frontend
 npm run start
 ```
 
-Open **[http://127.0.0.1:5173](http://127.0.0.1:5173)**. The command also starts the official
-mock API at **[http://127.0.0.1:3000](http://127.0.0.1:3000)**; the mock has no dependencies to install.
+`npm start` and `npm run start` are equivalent. Run either from the app directory above,
+not from `frontendchallengeserver` (where `npm start` runs only the mock).
+
+Keep the terminal running and open **[http://127.0.0.1:5173](http://127.0.0.1:5173)** in your browser;
+startup does not open a browser window. The command also starts the official mock API at
+**[http://127.0.0.1:3000](http://127.0.0.1:3000)**; the mock has no dependencies to install.
 
 `concurrently` labels the two logs and stops both services on Ctrl+C or when either exits.
 Ports 3000 and 5173 must be free. An occupied port fails clearly; Vite uses `--strictPort`.
+Run only one instance; use Ctrl+C in its terminal before starting another.
 A missing mock checkout produces the clone command above. `npm run start` is a development command.
 
 For separate terminals, run `npm --prefix frontendchallengeserver start` and `npm run dev`.
