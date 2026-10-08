@@ -7,6 +7,7 @@ import type { PrefillOptionGroup, PrefillSourceProvider } from './types';
 export const directDependenciesProvider: PrefillSourceProvider = {
   id: 'direct-dependencies',
   label: 'Direct dependencies',
+  /** Offers fields of existing form nodes reached by one upstream edge. */
   getGroups: ({ blueprint, form }) =>
     formGroups(blueprint, getDirectDependencies(blueprint.dependencies, form.id)),
 };
@@ -15,6 +16,7 @@ export const directDependenciesProvider: PrefillSourceProvider = {
 export const transitiveDependenciesProvider: PrefillSourceProvider = {
   id: 'transitive-dependencies',
   label: 'Transitive dependencies',
+  /** Offers upstream form fields beyond the direct dependencies, traversing non-form nodes too. */
   getGroups: ({ blueprint, form }) =>
     formGroups(blueprint, getTransitiveDependencies(blueprint.dependencies, form.id)),
 };
@@ -28,6 +30,7 @@ function formGroups(blueprint: Blueprint, nodeIds: string[]): PrefillOptionGroup
   return blueprint.forms.filter((form) => wanted.has(form.id)).map(toGroup);
 }
 
+/** Uses the node id as the source owner, so nodes sharing a definition remain distinct. */
 function toGroup(form: FormNode): PrefillOptionGroup {
   return {
     id: form.id,

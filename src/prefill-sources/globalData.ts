@@ -11,6 +11,7 @@ export interface GlobalDataSet {
   properties: readonly { key: string; label: string; valueType?: string }[];
 }
 
+/** Addresses a property by data-set id and key; this reference does not contain its value. */
 export function globalSource(dataSetId: string, propertyKey: string): PrefillSource {
   return { type: GLOBAL_SOURCE, ownerId: dataSetId, key: propertyKey };
 }
@@ -49,6 +50,7 @@ export function createGlobalDataProvider(
   return {
     id: 'global-data',
     label: 'Global data',
+    /** Builds fresh synchronous option groups from the data sets captured by this factory. */
     getGroups: () =>
       dataSets.map((dataSet) => ({
         id: dataSet.id,

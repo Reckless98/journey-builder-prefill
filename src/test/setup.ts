@@ -14,11 +14,13 @@ afterEach(cleanup);
  */
 const openers = new WeakMap<HTMLDialogElement, Element | null>();
 
+/** Records the opener and exposes open state; it does not emulate a browser's modal top layer. */
 HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement) {
   openers.set(this, document.activeElement);
   this.open = true;
 };
 
+/** Restores a connected opener and dispatches close so the component's normal cleanup runs. */
 HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement) {
   if (!this.open) return;
   this.open = false;

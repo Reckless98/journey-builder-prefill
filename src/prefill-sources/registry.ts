@@ -27,6 +27,7 @@ export function selectPrefillProviders(
   return [...new Set(ids)].flatMap((id) => byId.get(id) ?? []);
 }
 
+/** Reports unregistered ids for configuration diagnostics; selection skips these ids. */
 export function unknownProviderIds(
   ids: readonly string[],
   known: readonly PrefillSourceProvider[] = allPrefillProviders,

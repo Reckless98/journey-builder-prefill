@@ -39,6 +39,7 @@ export function PrefillFieldRow({
       ? `Change source for ${field.label}, currently ${resolved.groupLabel} ${resolved.option.label}`
       : `Change source for ${field.label}, currently an unavailable source`;
 
+  // Clearing removes its own button; restore focus to the row's persistent edit button.
   const handleClear = () => {
     onClear();
     // The clear button is about to disappear; keep keyboard focus on this row.

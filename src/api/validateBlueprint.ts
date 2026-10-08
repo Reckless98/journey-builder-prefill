@@ -2,33 +2,42 @@ import type { BlueprintGraphResponse } from './types';
 
 type Check = (value: unknown) => boolean;
 
+/** Narrows an unknown JSON value to an object whose properties can safely be inspected. */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+/** Checks primitive strings without coercing numbers, null, or other JSON values. */
 const isString: Check = (value) => typeof value === 'string';
+/** Allows an omitted string property, but rejects an explicitly null value. */
 const optionalString: Check = (value) => value === undefined || isString(value);
+/** Accepts the JSON Schema type forms this adapter reads: a string or a string array. */
 const optionalTypeNames: Check = (value) =>
   optionalString(value) || (Array.isArray(value) && value.every(isString));
 
+/** Validates every array element; null represents an empty collection in the API. */
 function nullableArray(value: unknown, check: Check): boolean {
   return value === null || (Array.isArray(value) && value.every(check));
 }
 
+/** Also permits an omitted nested array, whose normalization fallback is empty. */
 function optionalArray(value: unknown, check: Check): boolean {
   return value === undefined || nullableArray(value, check);
 }
 
+/** Validates all values of an optional dictionary, allowing both omission and null. */
 function optionalRecord(value: unknown, check: Check): boolean {
   return (
     value === undefined || value === null || (isRecord(value) && Object.values(value).every(check))
   );
 }
 
+/** Requires an expression discriminator; the adapter decides which payloads it understands. */
 function isExpression(value: unknown): boolean {
   return isRecord(value) && isString(value.type);
 }
 
+/** Checks node identity and the nested data read even for non-form graph nodes. */
 function isNode(value: unknown): boolean {
   if (!isRecord(value) || !isString(value.id) || !isString(value.type)) return false;
   const data = value.data;
@@ -41,10 +50,12 @@ function isNode(value: unknown): boolean {
   );
 }
 
+/** Checks edge endpoint types; reference existence is handled during normalization. */
 function isEdge(value: unknown): boolean {
   return isRecord(value) && isString(value.source) && isString(value.target);
 }
 
+/** Validates field label/type hints without claiming to validate the whole JSON Schema. */
 function isFieldProperty(value: unknown): boolean {
   return (
     isRecord(value) &&
@@ -53,6 +64,7 @@ function isFieldProperty(value: unknown): boolean {
   );
 }
 
+/** Checks the properties dictionary and required-field names used to build field rows. */
 function isFieldSchema(value: unknown): boolean {
   return (
     value === undefined ||
@@ -63,6 +75,7 @@ function isFieldSchema(value: unknown): boolean {
   );
 }
 
+/** Recursively validates UI-schema label scopes and nested layout elements. */
 function isUiElement(value: unknown): boolean {
   return (
     isRecord(value) &&
@@ -72,6 +85,7 @@ function isUiElement(value: unknown): boolean {
   );
 }
 
+/** Allows absent UI metadata, or a layout tree whose readable elements are valid. */
 function isUiSchema(value: unknown): boolean {
   return (
     value === undefined ||
@@ -80,6 +94,7 @@ function isUiSchema(value: unknown): boolean {
   );
 }
 
+/** Validates a reusable form definition, distinct from a graph node that references it. */
 function isForm(value: unknown): boolean {
   return (
     isRecord(value) &&

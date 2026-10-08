@@ -12,6 +12,10 @@ export interface BlueprintRequest {
   blueprintVersionId?: string;
 }
 
+/**
+ * Builds the graph endpoint with individually encoded path parameters and no trailing base slash.
+ * The optional version segment targets the published API; leave it out for the official mock.
+ */
 export function buildBlueprintGraphUrl(request: BlueprintRequest): string {
   const { baseUrl, tenantId, blueprintId, blueprintVersionId } = request;
   const segments = [

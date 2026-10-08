@@ -62,8 +62,10 @@ export function SourcePickerDialog({
     ? filtered.filter((section) => section.groups.length > 0)
     : filtered;
 
+  // Let the native close event restore focus before the parent unmounts this dialog.
   const close = () => dialogRef.current?.close();
 
+  // A radio change edits only the draft; confirmation commits an available, changed source.
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selected || !canSubmit) return;
@@ -86,7 +88,7 @@ export function SourcePickerDialog({
             <h2 id={titleId} className="text-lg font-semibold">
               Select a prefill source
             </h2>
-            <p className="mt-0.5 flex flex-wrap items-center gap-1 text-sm text-slate-600">
+            <p className="mt-0.5 flex flex-wrap items-center gap-1 text-sm wrap-anywhere text-slate-600">
               for {formName}
               <ChevronRightIcon className="size-3" />
               <span className="font-medium text-slate-900">{fieldLabel}</span>
@@ -214,7 +216,7 @@ function OptionRow({ id, option, checked, onChoose }: OptionRowProps) {
         onChange={onChoose}
         className="size-4 shrink-0 accent-indigo-600 outline-none"
       />
-      <span className="min-w-0 flex-1 font-medium">{option.label}</span>
+      <span className="min-w-0 flex-1 font-medium wrap-anywhere">{option.label}</span>
       <code className="max-w-[45%] truncate font-mono text-xs text-slate-600">
         {option.source.key}
       </code>

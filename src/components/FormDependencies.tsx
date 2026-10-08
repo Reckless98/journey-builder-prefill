@@ -8,6 +8,7 @@ interface FormDependenciesProps {
 
 /** Where a form sits in the graph: the forms it depends on directly, and through those. */
 export function FormDependencies({ blueprint, form }: FormDependenciesProps) {
+  // Traversal includes non-form nodes; only forms have names to show in these rows.
   const formsAmong = (nodeIds: string[]) =>
     blueprint.forms.filter((candidate) => nodeIds.includes(candidate.id));
 
@@ -26,6 +27,7 @@ export function FormDependencies({ blueprint, form }: FormDependenciesProps) {
   );
 }
 
+/** Renders one definition-list entry, omitting categories with no form dependencies. */
 function DependencyRow({ term, forms }: { term: string; forms: readonly FormNode[] }) {
   if (forms.length === 0) return null;
   return (

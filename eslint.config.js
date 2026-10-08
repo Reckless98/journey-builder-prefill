@@ -9,6 +9,11 @@ import tseslint from 'typescript-eslint';
 export default defineConfig([
   globalIgnores(['dist', 'coverage']),
   {
+    files: ['scripts/**/*.mjs'],
+    extends: [js.configs.recommended, prettier],
+    languageOptions: { globals: globals.node },
+  },
+  {
     files: ['**/*.{ts,tsx}'],
     extends: [
       js.configs.recommended,

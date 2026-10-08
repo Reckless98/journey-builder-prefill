@@ -10,10 +10,12 @@ import type { PrefillMappings, PrefillSource } from '../domain/types';
 export function usePrefillMappings(initial: PrefillMappings) {
   const [mappings, setMappings] = useState(initial);
 
+  // Read the latest state inside the update, rather than capturing an old mappings Map.
   const set = useCallback((formId: string, fieldKey: string, source: PrefillSource) => {
     setMappings((current) => setMapping(current, formId, fieldKey, source));
   }, []);
 
+  // Share the domain helper's no-op behavior when the field has no mapping.
   const clear = useCallback((formId: string, fieldKey: string) => {
     setMappings((current) => clearMapping(current, formId, fieldKey));
   }, []);
