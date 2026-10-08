@@ -134,13 +134,25 @@ function collectUiLabels(
   labels = new Map<string, string>(),
 ): Map<string, string> {
   for (const element of elements ?? []) {
-    const token = /^#\/properties\/([^/]+)$/.exec(element.scope ?? '')?.[1];
-    // JSON Pointer escapes one property token: decode ~1 before ~0 so ~01 stays literal ~1.
-    const key = token?.replace(/~1/g, '/').replace(/~0/g, '~');
-    if (key && element.label) labels.set(key, element.label);
+    const key = fieldKeyFromScope(element.scope);
+    if (key !== undefined && element.label) labels.set(key, element.label);
     collectUiLabels(element.elements, labels);
   }
   return labels;
+}
+
+function fieldKeyFromScope(scope: string | undefined): string | undefined {
+  if (!scope?.startsWith('#')) return undefined;
+  try {
+    // Decode the URI fragment once, then resolve its single top-level property token.
+    const pointer = decodeURIComponent(scope.slice(1));
+    const token = /^\/properties\/([^/]*)$/.exec(pointer)?.[1];
+    // Decode ~1 before ~0 so ~01 stays literal ~1.
+    return token?.replace(/~1/g, '/').replace(/~0/g, '~');
+  } catch {
+    // Invalid percent escapes or UTF-8 cannot identify a field; retain its schema label.
+    return undefined;
+  }
 }
 
 function toFormPrefill(node: ApiNode, form: FormNode, warnings: string[]): FormPrefill {

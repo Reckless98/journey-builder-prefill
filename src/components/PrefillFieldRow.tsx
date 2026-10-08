@@ -47,7 +47,7 @@ export function PrefillFieldRow({
 
   return (
     <li className="flex flex-col gap-3 px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-      <div className="min-w-0">
+      <div className="min-w-0 wrap-anywhere">
         <p className="font-medium text-slate-900">
           {field.label}
           {field.required && (
