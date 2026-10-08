@@ -19,14 +19,6 @@ export function sourceId(source: PrefillSource): string {
   return JSON.stringify([source.type, source.ownerId, source.key]);
 }
 
-export function getMapping(
-  mappings: PrefillMappings,
-  formId: string,
-  fieldKey: string,
-): PrefillSource | undefined {
-  return mappings.get(formId)?.get(fieldKey);
-}
-
 /**
  * Returns new mappings in which `fieldKey` of `formId` is prefilled from `source`, replacing
  * any previous source. The input is not modified and other forms keep their identity.

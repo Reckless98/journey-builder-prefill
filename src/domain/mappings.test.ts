@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { clearMapping, formFieldSource, getMapping, setMapping, sourceId } from './mappings';
+import { clearMapping, formFieldSource, setMapping, sourceId } from './mappings';
 import type { PrefillMappings } from './types';
 
 const empty: PrefillMappings = new Map();
@@ -36,14 +36,14 @@ describe('setMapping', () => {
   it('adds a mapping to a field', () => {
     const mappings = setMapping(empty, 'form-d', 'email', emailOfA);
 
-    expect(getMapping(mappings, 'form-d', 'email')).toEqual(emailOfA);
+    expect(mappings.get('form-d')?.get('email')).toEqual(emailOfA);
   });
 
   it('replaces an existing mapping', () => {
     const first = setMapping(empty, 'form-d', 'email', emailOfA);
     const second = setMapping(first, 'form-d', 'email', nameOfA);
 
-    expect(getMapping(second, 'form-d', 'email')).toEqual(nameOfA);
+    expect(second.get('form-d')?.get('email')).toEqual(nameOfA);
     expect(second.get('form-d')?.size).toBe(1);
   });
 
@@ -51,15 +51,15 @@ describe('setMapping', () => {
     const first = setMapping(empty, 'form-d', 'email', emailOfA);
     const second = setMapping(first, 'form-d', 'name', nameOfA);
 
-    expect(getMapping(second, 'form-d', 'email')).toEqual(emailOfA);
-    expect(getMapping(second, 'form-d', 'name')).toEqual(nameOfA);
+    expect(second.get('form-d')?.get('email')).toEqual(emailOfA);
+    expect(second.get('form-d')?.get('name')).toEqual(nameOfA);
   });
 
   it('does not modify its input', () => {
     const before = setMapping(empty, 'form-d', 'email', emailOfA);
     setMapping(before, 'form-d', 'email', nameOfA);
 
-    expect(getMapping(before, 'form-d', 'email')).toEqual(emailOfA);
+    expect(before.get('form-d')?.get('email')).toEqual(emailOfA);
     expect(empty.size).toBe(0);
   });
 
@@ -73,15 +73,15 @@ describe('setMapping', () => {
   it('keeps apart fields that share a key on different forms', () => {
     const mappings = setMapping(empty, 'form-b', 'email', emailOfA);
 
-    expect(getMapping(mappings, 'form-d', 'email')).toBeUndefined();
+    expect(mappings.get('form-d')?.get('email')).toBeUndefined();
   });
 
   it('handles field keys that are also object prototype members', () => {
-    expect(getMapping(empty, 'form-d', 'constructor')).toBeUndefined();
+    expect(empty.get('form-d')?.get('constructor')).toBeUndefined();
 
     const mappings = setMapping(empty, 'form-d', 'constructor', emailOfA);
-    expect(getMapping(mappings, 'form-d', 'constructor')).toEqual(emailOfA);
-    expect(getMapping(mappings, 'form-d', 'toString')).toBeUndefined();
+    expect(mappings.get('form-d')?.get('constructor')).toEqual(emailOfA);
+    expect(mappings.get('form-d')?.get('toString')).toBeUndefined();
   });
 });
 
@@ -90,7 +90,7 @@ describe('clearMapping', () => {
     const before = setMapping(empty, 'form-d', 'email', emailOfA);
     const after = clearMapping(before, 'form-d', 'email');
 
-    expect(getMapping(after, 'form-d', 'email')).toBeUndefined();
+    expect(after.get('form-d')?.get('email')).toBeUndefined();
   });
 
   it('keeps the other fields of the same form', () => {
@@ -102,7 +102,7 @@ describe('clearMapping', () => {
     );
     const after = clearMapping(before, 'form-d', 'email');
 
-    expect(getMapping(after, 'form-d', 'name')).toEqual(nameOfA);
+    expect(after.get('form-d')?.get('name')).toEqual(nameOfA);
   });
 
   it('drops the form entry once its last mapping is cleared', () => {
@@ -134,6 +134,6 @@ describe('clearMapping', () => {
     const before = setMapping(empty, 'form-d', 'email', emailOfA);
     clearMapping(before, 'form-d', 'email');
 
-    expect(getMapping(before, 'form-d', 'email')).toEqual(emailOfA);
+    expect(before.get('form-d')?.get('email')).toEqual(emailOfA);
   });
 });
