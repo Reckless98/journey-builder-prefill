@@ -14,9 +14,8 @@ interface BlueprintWorkspaceProps {
 /**
  * A loaded blueprint: the form list next to the prefill editor of the selected form.
  *
- * Owns the two pieces of state the screen has, which form is selected and the edited mappings.
- * It is only mounted once a blueprint has loaded, so both can start from the blueprint without
- * any effect to keep them in sync.
+ * Owns the selected form and the edited mappings. It is mounted only once a blueprint has
+ * loaded, so both start from the blueprint and no effect has to keep them in sync.
  */
 export function BlueprintWorkspace({ blueprint, providers }: BlueprintWorkspaceProps) {
   const { mappings, setMapping, clearMapping } = usePrefillMappings(blueprint.prefill);

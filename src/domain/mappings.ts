@@ -9,10 +9,8 @@ export function formFieldSource(nodeId: string, fieldKey: string): PrefillSource
 }
 
 /**
- * A stable string identity for a source, usable as a map key or React key.
- *
- * Two sources share an id only when all three parts are equal. JSON encoding rather than
- * joining with a separator means no choice of characters inside the parts can make two
+ * A stable string identity for a source, usable as a map key or React key. JSON encoding,
+ * rather than joining with a separator, means no character inside a part can make two
  * different sources collide.
  */
 export function sourceId(source: PrefillSource): string {

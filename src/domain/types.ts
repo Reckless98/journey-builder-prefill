@@ -1,8 +1,6 @@
 /**
- * Domain model for the prefill editor.
- *
- * Everything outside `src/api` works with these types. The raw API shapes are converted
- * once, in `src/api/normalizeBlueprint.ts`, and never reach the UI.
+ * Domain model for the prefill editor. `src/api/normalizeBlueprint.ts` converts the raw API
+ * response into these types once; nothing outside `src/api` sees the raw shapes.
  */
 
 /** A single input on a form. */
@@ -10,7 +8,7 @@ export interface FormField {
   /** Property key in the form's field schema. Unique within one form, not across forms. */
   key: string;
   label: string;
-  /** Avantos field type such as "short-text". Kept for display and future compatibility rules. */
+  /** Avantos field type such as "short-text". Shown as a hint. */
   type: string;
   required: boolean;
 }
@@ -40,12 +38,11 @@ export interface FormNode {
 export type DependencyMap = ReadonlyMap<string, readonly string[]>;
 
 /**
- * A serialisable pointer to one value that can prefill a field: "the value named `key` on the
- * thing `ownerId` of kind `type`". Deliberately open-ended so a new source provider can introduce
- * its own `type` without this file changing.
+ * A serialisable pointer to one value that can prefill a field: the value named `key` on the
+ * thing `ownerId` of kind `type`. Open-ended, so a new provider can introduce its own `type`.
  *
  * Examples: `{ type: 'form_field', ownerId: <node id>, key: 'email' }`,
- * `{ type: 'global', ownerId: 'client_organisation', key: 'name' }`.
+ * `{ type: 'global', ownerId: 'client_organization', key: 'name' }`.
  */
 export interface PrefillSource {
   type: string;

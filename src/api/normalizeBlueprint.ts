@@ -167,10 +167,10 @@ function toFormPrefill(node: ApiNode, form: FormNode, warnings: string[]): FormP
 /**
  * Reads one `input_mapping` expression as a prefill source.
  *
- * The schema allows some thirty expression types here and the mock data contains none, so only
- * the one type that unambiguously addresses a value of another component in the same blueprint
- * is interpreted: `action_component_data`, with `component_key` and `output_key`. Whether the
- * source is still a valid dependency is decided later, against the graph.
+ * The schema allows more than thirty expression types here and the mock data contains none, so
+ * only the type that unambiguously addresses a value of another component is interpreted:
+ * `action_component_data`, with `component_key` and `output_key`. Whether that source is still
+ * upstream of the form is decided later, against the graph.
  */
 function toPrefillSource(expression: ApiExpression): PrefillSource | undefined {
   const { type, component_key: nodeId, output_key: fieldKey, is_metadata: isMetadata } = expression;

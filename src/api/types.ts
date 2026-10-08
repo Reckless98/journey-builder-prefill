@@ -1,9 +1,7 @@
 /**
  * Transport types: the parts of the `action-blueprint-graph-get` response this app reads.
- *
  * Names and nullability follow the OpenAPI schema `ActionBlueprintGraphDescription` and the
- * response of the challenge's mock server. Fields the app does not use are left out. Nothing
- * outside `src/api` should import from this file.
+ * mock server's response. Only `src/api` and test fixtures import from this file.
  */
 
 export interface BlueprintGraphResponse {

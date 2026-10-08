@@ -16,9 +16,8 @@ export function globalSource(dataSetId: string, propertyKey: string): PrefillSou
 }
 
 /**
- * Example global data. The assignment leaves the content of global data open and the graph
- * endpoint does not describe any, so these two sets are static and exist to show a provider
- * that has nothing to do with the form graph.
+ * Example global data. The assignment leaves its content open and the graph endpoint describes
+ * none, so these sets are static. They show a provider that does not depend on the form graph.
  */
 const EXAMPLE_GLOBAL_DATA: readonly GlobalDataSet[] = [
   {

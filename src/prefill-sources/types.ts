@@ -12,10 +12,7 @@ export interface PrefillOption {
   /** What gets stored in the mapping. Its id (`sourceId`) is the option's identity. */
   source: PrefillSource;
   label: string;
-  /**
-   * The kind of value, e.g. "short-text". Shown as a hint. Nothing filters on it: the
-   * assignment defines no compatibility rules between field types.
-   */
+  /** The kind of value, e.g. "short-text". Shown as a hint; nothing filters on it. */
   valueType?: string;
 }
 
@@ -28,11 +25,9 @@ export interface PrefillOptionGroup {
 }
 
 /**
- * A source of prefill options.
- *
- * This is the whole extension point: the editor and the picker only ever see the groups and
- * options providers return, so a new kind of source is a new object of this shape added to the
- * list in `registry.ts`.
+ * A source of prefill options, and the app's extension point. The UI only sees the groups and
+ * options providers return, so a new kind of source is one more object of this shape in
+ * `registry.ts`.
  */
 export interface PrefillSourceProvider {
   /** Unique among the providers in use. */

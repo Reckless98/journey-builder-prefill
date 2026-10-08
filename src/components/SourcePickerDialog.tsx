@@ -19,14 +19,12 @@ interface SourcePickerDialogProps {
 }
 
 /**
- * Modal for choosing the source that prefills one field.
+ * Modal for choosing the source that prefills one field. Mount it to open it.
  *
- * Mount it to open it. It is a native `<dialog>` shown with `showModal()`, which provides the
- * focus trap, Escape to close, the inert background and returning focus to the opener.
- *
- * The element always closes itself, whether through a button that calls `close()`, Escape or a
- * click outside. The parent then unmounts the dialog in response to the `close` event. Unmounting
- * it directly instead would skip the browser's focus return.
+ * A native `<dialog>` shown with `showModal()` provides the focus trap, Escape, the inert
+ * background and focus return. The element always closes itself (a button calling `close()`,
+ * Escape, or a click outside) and the parent unmounts it on the `close` event. Unmounting it
+ * directly would skip the browser's focus return.
  */
 export function SourcePickerDialog({
   formName,
