@@ -26,20 +26,34 @@ forms, and lets you view and edit where each field of a form gets its value from
 
 ## Getting Started
 
-Requires Node.js 22.13+ (22.x), 24.x, or 26+, and two terminals.
+Requires Node.js 22.13+ (22.x), 24.x, or 26+.
 
 ```bash
-# Terminal 1: the official mock server (it has no dependencies to install)
-git clone https://github.com/mosaic-avantos/frontendchallengeserver.git
-cd frontendchallengeserver
-npm start                      # http://localhost:3000
-
-# Terminal 2: this app
 git clone https://github.com/Reckless98/journey-builder-prefill.git
 cd journey-builder-prefill
 npm ci
-npm run dev                    # http://localhost:5173
+
+# One-time setup: clone the official mock inside the app checkout.
+# It has no dependencies to install and is ignored by this repository.
+git clone https://github.com/mosaic-avantos/frontendchallengeserver.git frontendchallengeserver
+
+npm run start
 ```
+
+`npm run start` (or `npm start`) runs the official mock API at `http://127.0.0.1:3000`
+and the Vite app at `http://127.0.0.1:5173` in one terminal. Open the app URL in your
+browser. Press Ctrl+C to stop both. If either process exits, its companion also stops.
+Ports 3000 and 5173 must be free; stop any separately running copies first. Vite uses
+`--strictPort` so an occupied app port produces an error instead of silently moving.
+
+The mock launcher checks the checkout first and prints the clone command if files are missing.
+It loads the official server unchanged and supplies a loopback host to its `listen` call;
+the official source itself otherwise listens on all interfaces. The default API URL also
+works through `localhost:3000`.
+
+To run them separately, use `npm --prefix frontendchallengeserver start` in one terminal
+and `npm run dev` in another. `npm run build` produces the app's production assets;
+`npm run start` is the local development setup.
 
 The defaults target the mock server, so no configuration is needed. To change one, copy
 `.env.example` to `.env.local`:
@@ -65,8 +79,8 @@ src/
   config.ts         environment variables
 ```
 
-Imports point one way: components use hooks, hooks use the API and provider layers, and
-everything rests on the domain, which has no React or network code.
+UI components and hooks use the API, provider, and domain layers as needed. The domain is
+the shared foundation and has no React or network code.
 
 **Data flow.** `useBlueprint` fetches the graph, `validateBlueprint` checks the shapes the app
 reads, and `normalizeBlueprint` converts the response into a `Blueprint`: forms, a dependency
@@ -84,10 +98,10 @@ one result both to describe existing mappings and to fill the picker.
   shared ancestor once, excludes the form itself and its direct dependencies, and ends on a
   cycle.
 - **API boundary.** The client turns an unreachable server, an error status or an invalid body
-  into a readable error. The adapter drops references that do not resolve and reports them as
-  warnings instead of failing.
+  into a readable error. The adapter drops invalid edges and target-field mappings with warnings;
+  stale source references remain visible so they can be repaired or cleared.
 - **Providers.** A provider returns groups of options for a form. `registry.ts` lists the
-  providers and `buildSections` composes them, enforcing two rules whatever they return: a form
+  providers and `buildSections` composes their typed outputs, enforcing two rules: a form
   field is only offered while it exists upstream, and each source is offered once.
 - **State.** Local React state only. `BlueprintWorkspace` owns the selected form and the
   mappings, `PrefillEditor` the open picker, and the dialog its search and selection.
@@ -136,10 +150,12 @@ the field rows.
   traversal and mapping rules are tested without React.
 - **Extension.** Components render sections, groups and options and never branch on the kind of
   source, so a new source costs one object and one registry line.
-- **Cost.** Direct dependencies are a lookup; transitive ones are O(V + E) per form, computed
-  when a form is selected and memoised until it changes. Forms, mappings and options live in
-  `Map`s keyed by id, and options are indexed once per selected form. Typing in the search box
-  only re-runs a filter that is linear in the number of options.
+- **Cost.** A direct lookup also filters and deduplicates its parent list, O(d). Each transitive
+  traversal is O(V + E) over the reachable graph. The editor memoises composed sections and their
+  option index while its blueprint, form and provider references stay unchanged. Composition and
+  the dependency summary perform separate traversals. Mappings and option indices use `Map`s;
+  copying a mapping for an immutable update costs O(forms + mapped fields in that form).
+  Search scans offered options for every term; the picker still renders every matching option.
 - **State boundaries.** Everything is client-side and in memory, for one blueprint per page
   load.
 
@@ -154,8 +170,9 @@ What would have to change for:
 - **Much larger data.** The picker renders every option, so thousands of fields would need list
   virtualisation and a debounced search.
 
-These are complexity statements, not measurements: the app has not been load-tested, and the
-mock graph has six forms of eight fields each.
+These are complexity statements, not production capacity claims. The mock graph has six forms
+of eight fields each; synthetic browser measurements are kept in the separate local verification
+report, rather than treated as a supported workload.
 
 ## Testing
 
@@ -164,8 +181,9 @@ npm run check   # typecheck, ESLint, Prettier, tests and production build (what 
 npm test        # tests only
 ```
 
-171 tests in 11 files, with Vitest and React Testing Library. Only `fetch` is mocked, and the
-fixture is a verbatim copy of the mock server's `graph.json`.
+174 tests in 11 files, with Vitest and React Testing Library. Tests stub `fetch` and supply
+partial native-dialog stand-ins for jsdom; application components and domain logic run normally.
+The fixture is a verbatim copy of the mock server's `graph.json`.
 
 - **Traversal:** chains, branches, diamonds, independent graphs, unknown ids, self-loops, cycles.
 - **Mappings:** add, replace, clear, immutability, isolation between forms and fields.
@@ -178,7 +196,8 @@ fixture is a verbatim copy of the mock server's `graph.json`.
   and retry, empty state.
 
 jsdom has no modal `<dialog>`, so Escape, the focus trap and outside-click dismissal are not
-covered by the automated tests. They were checked manually in Chromium.
+covered by Vitest. They were verified with Playwright assertions in real Chromium. Those
+browser checks are separate from `npm run check` and are not part of repository CI.
 
 ## Assumptions and Limitations
 
