@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   buildBlueprintGraphUrl,
   fetchBlueprintGraph,
@@ -29,8 +29,10 @@ export function useBlueprint(request: BlueprintRequest): {
 } {
   const url = buildBlueprintGraphUrl(request);
   const [attempt, setAttempt] = useState(0);
-  const requestKey = `${attempt} ${url}`;
-  const [settled, setSettled] = useState<{ requestKey: string; outcome: Outcome }>();
+  // A → B → A is a new load, even if B has not settled. Comparing only the URL and attempt
+  // would reuse A's old outcome and mount an editor with stale initial mappings.
+  const requestKey = useMemo(() => ({ url, attempt }), [url, attempt]);
+  const [settled, setSettled] = useState<{ requestKey: typeof requestKey; outcome: Outcome }>();
 
   useEffect(() => {
     // Aborting on cleanup drops the answer of a request that is no longer current, including
