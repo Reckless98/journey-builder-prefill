@@ -118,9 +118,14 @@ function toFields(definition: ApiForm): FormField[] {
   return Object.entries(schema?.properties ?? {}).map(([key, property]) => ({
     key,
     label: property.title ?? uiLabels.get(key) ?? key,
-    type: property.avantos_type ?? property.type ?? 'unknown',
+    type: property.avantos_type ?? schemaTypeLabel(property.type),
     required: required.has(key),
   }));
+}
+
+function schemaTypeLabel(type: string | string[] | undefined): string {
+  const names = type === undefined ? [] : [type].flat();
+  return names.length > 0 ? names.join(' | ') : 'unknown';
 }
 
 /** Field key → label from the UI schema, used for fields whose schema property has no title. */

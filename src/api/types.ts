@@ -61,7 +61,8 @@ export interface ApiFieldSchema {
 export interface ApiFieldProperty {
   avantos_type?: string;
   title?: string;
-  type?: string;
+  /** The JSON Schema `type` keyword: one type name or a list of them. */
+  type?: string | string[];
 }
 
 export interface ApiUiSchema {

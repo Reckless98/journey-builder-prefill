@@ -258,6 +258,32 @@ describe('normalizeBlueprint', () => {
     ]);
   });
 
+  it('shows a JSON Schema type list as the field type when there is no Avantos type', () => {
+    const blueprint = normalizeBlueprint(
+      apiResponse({
+        nodes: [apiNode('a', 'Form A', 'f')],
+        forms: [
+          {
+            id: 'f',
+            field_schema: {
+              properties: {
+                nickname: { type: ['string', 'null'] },
+                age: { avantos_type: 'number', type: ['integer', 'null'] },
+                empty: { type: [] },
+              },
+            },
+          },
+        ],
+      }),
+    );
+
+    expect(blueprint.forms[0]?.fields.map((field) => field.type)).toEqual([
+      'string | null',
+      'number',
+      'unknown',
+    ]);
+  });
+
   it('decodes JSON Pointer escapes when resolving top-level UI labels', () => {
     const blueprint = normalizeBlueprint(
       apiResponse({
