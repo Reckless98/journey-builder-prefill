@@ -31,6 +31,14 @@ export function PrefillFieldRow({
   const editButtonRef = useRef<HTMLButtonElement>(null);
   const state = !source ? 'empty' : resolved ? 'mapped' : 'unavailable';
 
+  // The visible content differs per state; the accessible name always says which field the
+  // button belongs to, since every row has one.
+  const editLabel = !source
+    ? `Select source for ${field.label}`
+    : resolved
+      ? `Change source for ${field.label}, currently ${resolved.groupLabel} ${resolved.option.label}`
+      : `Change source for ${field.label}, currently an unavailable source`;
+
   const handleClear = () => {
     onClear();
     // The clear button is about to disappear; keep keyboard focus on this row.
@@ -66,17 +74,17 @@ export function PrefillFieldRow({
             ref={editButtonRef}
             type="button"
             onClick={onEdit}
+            aria-label={editLabel}
             className={`inline-flex min-w-0 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition-colors ${EDIT_BUTTON_CLASSES[state]}`}
           >
             {!source && (
               <>
                 <PlusIcon />
-                Select source<span className="sr-only"> for {field.label}</span>
+                Select source
               </>
             )}
             {source && resolved && (
               <>
-                <span className="sr-only">Change source for {field.label}, currently </span>
                 <LinkIcon className="size-4 text-indigo-600" />
                 <span className="truncate">{resolved.groupLabel}</span>
                 <ChevronRightIcon className="size-3 text-indigo-400" />
@@ -85,7 +93,6 @@ export function PrefillFieldRow({
             )}
             {source && !resolved && (
               <>
-                <span className="sr-only">Change source for {field.label}, currently an </span>
                 <WarningIcon className="size-4 text-amber-600" />
                 Unavailable source
               </>
