@@ -258,6 +258,33 @@ describe('normalizeBlueprint', () => {
       { key: 'bare', label: 'bare', type: 'unknown', required: false },
     ]);
   });
+
+  it('decodes JSON Pointer escapes when resolving top-level UI labels', () => {
+    const blueprint = normalizeBlueprint(
+      apiResponse({
+        nodes: [apiNode('a', 'Form A', 'f')],
+        forms: [
+          {
+            id: 'f',
+            field_schema: { properties: { 'contact/email': {}, 'tilde~key': {}, 'literal~1': {} } },
+            ui_schema: {
+              elements: [
+                { scope: '#/properties/contact~1email', label: 'Contact email' },
+                { scope: '#/properties/tilde~0key', label: 'Tilde field' },
+                { scope: '#/properties/literal~01', label: 'Literal escape' },
+              ],
+            },
+          },
+        ],
+      }),
+    );
+
+    expect(blueprint.forms[0]?.fields.map((field) => field.label)).toEqual([
+      'Contact email',
+      'Tilde field',
+      'Literal escape',
+    ]);
+  });
 });
 
 describe('normalizeBlueprint reading stored input mappings', () => {
