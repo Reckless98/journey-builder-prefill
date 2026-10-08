@@ -2,19 +2,18 @@ import type { BlueprintRequest } from './api/blueprintClient';
 import { BlueprintWorkspace } from './components/BlueprintWorkspace';
 import { Button } from './components/Button';
 import { StatusPanel } from './components/StatusPanel';
-import { blueprintRequest } from './config';
+import { blueprintRequest, prefillProviders } from './config';
 import { useBlueprint } from './hooks/useBlueprint';
-import { defaultPrefillProviders } from './prefill-sources/registry';
 import type { PrefillSourceProvider } from './prefill-sources/types';
 
 interface AppProps {
   /** Which blueprint to load. Defaults to the one configured through the environment. */
   request?: BlueprintRequest;
-  /** The prefill sources to offer. Defaults to the registry. */
+  /** The prefill sources to offer. Defaults to the ones configured through the environment. */
   providers?: readonly PrefillSourceProvider[];
 }
 
-export function App({ request = blueprintRequest, providers = defaultPrefillProviders }: AppProps) {
+export function App({ request = blueprintRequest, providers = prefillProviders }: AppProps) {
   const { state, retry } = useBlueprint(request);
 
   return (

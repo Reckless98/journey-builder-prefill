@@ -4,4 +4,5 @@ interface ImportMetaEnv {
   readonly VITE_TENANT_ID?: string;
   readonly VITE_BLUEPRINT_ID?: string;
   readonly VITE_BLUEPRINT_VERSION_ID?: string;
+  readonly VITE_PREFILL_SOURCES?: string;
 }

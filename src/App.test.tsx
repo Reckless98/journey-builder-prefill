@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 import type { BlueprintGraphResponse } from './api/types';
 import { createGlobalDataProvider, globalDataProvider } from './prefill-sources/globalData';
-import { defaultPrefillProviders } from './prefill-sources/registry';
+import { allPrefillProviders } from './prefill-sources/registry';
 import type { PrefillSourceProvider } from './prefill-sources/types';
 import {
   apiForm,
@@ -38,7 +38,7 @@ const respondWith = (body: unknown, init?: ResponseInit) => () =>
 /** Renders the app against a graph and waits until its forms are on screen. */
 async function renderLoadedApp(
   graph: BlueprintGraphResponse = mockServerResponse(),
-  providers?: readonly PrefillSourceProvider[],
+  providers: readonly PrefillSourceProvider[] = allPrefillProviders,
 ) {
   stubFetch(respondWith(graph));
   const user = userEvent.setup();
@@ -417,7 +417,7 @@ describe('configuring the prefill sources', () => {
       ],
     };
     const user = await renderLoadedApp(mockServerResponse(), [
-      ...defaultPrefillProviders,
+      ...allPrefillProviders,
       teamProvider,
     ]);
     await selectForm(user, 'Form D');
