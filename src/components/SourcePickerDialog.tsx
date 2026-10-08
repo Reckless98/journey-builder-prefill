@@ -62,8 +62,10 @@ export function SourcePickerDialog({
     ? filtered.filter((section) => section.groups.length > 0)
     : filtered;
 
+  // Let the native close event restore focus before the parent unmounts this dialog.
   const close = () => dialogRef.current?.close();
 
+  // A radio change edits only the draft; confirmation commits an available, changed source.
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selected || !canSubmit) return;

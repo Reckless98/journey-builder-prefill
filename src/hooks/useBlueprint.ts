@@ -38,6 +38,7 @@ export function useBlueprint(request: BlueprintRequest): {
     // Aborting on cleanup drops the answer of a request that is no longer current, including
     // the first of the two requests React's StrictMode makes in development.
     const controller = new AbortController();
+    // Cleanup invalidates this closure even if a transport delivers a response after abort.
     const settle = (outcome: Outcome) => {
       if (!controller.signal.aborted) setSettled({ requestKey, outcome });
     };
@@ -49,12 +50,14 @@ export function useBlueprint(request: BlueprintRequest): {
     return () => controller.abort();
   }, [url, requestKey]);
 
+  // A new attempt creates a new request identity even when the URL stays the same.
   const retry = useCallback(() => setAttempt((current) => current + 1), []);
 
   const state = settled?.requestKey === requestKey ? settled.outcome : LOADING;
   return { state, retry };
 }
 
+/** Converts caught unknown values into readable UI text without assuming they are Errors. */
 function describe(error: unknown): string {
   return error instanceof Error ? error.message : 'The blueprint could not be loaded.';
 }

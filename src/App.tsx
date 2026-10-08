@@ -13,6 +13,7 @@ interface AppProps {
   providers?: readonly PrefillSourceProvider[];
 }
 
+/** Owns request status and mounts the editable workspace only after a validated load succeeds. */
 export function App({ request = blueprintRequest, providers = prefillProviders }: AppProps) {
   const { state, retry } = useBlueprint(request);
 

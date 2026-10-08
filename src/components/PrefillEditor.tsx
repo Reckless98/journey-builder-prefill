@@ -20,8 +20,9 @@ interface PrefillEditorProps {
 /**
  * Shows and edits the prefill configuration of one form.
  *
- * Providers are consulted once, here. The resulting sections both describe the mappings that
- * exist and fill the picker, so nothing below knows which kinds of source exist.
+ * Provider composition is memoised here while the blueprint, form and providers are unchanged.
+ * Its sections both describe existing mappings and fill the picker, so children do not need
+ * to know which kinds of source exist.
  *
  * Render with `key={form.id}` so the open-picker state does not carry over between forms.
  */

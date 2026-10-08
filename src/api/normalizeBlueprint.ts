@@ -21,8 +21,9 @@ const FORM_NODE_TYPE = 'form';
 /**
  * The adapter between the API and the app: turns a raw graph response into the domain model.
  *
- * After the client validates the response structure, references that do not resolve are
- * dropped and described in `warnings`, so one bad edge or mapping cannot take the editor down.
+ * After structural validation, invalid edges, target mappings and unsupported expressions
+ * are skipped with warnings. Missing definitions stay visible without fields; stale source
+ * references are retained so the editor can flag them as unavailable and offer a repair.
  */
 export function normalizeBlueprint(response: BlueprintGraphResponse): Blueprint {
   const warnings: string[] = [];
@@ -58,6 +59,7 @@ export function normalizeBlueprint(response: BlueprintGraphResponse): Blueprint 
   };
 }
 
+/** Keeps the first occurrence of each node id and records every discarded duplicate. */
 function uniqueNodes(nodes: ApiNode[], warnings: string[]): ApiNode[] {
   const seen = new Set<string>();
   return nodes.filter((node) => {
@@ -90,6 +92,7 @@ function toDependencyMap(nodes: ApiNode[], edges: ApiEdge[], warnings: string[])
   return dependencies;
 }
 
+/** Joins a node to its reusable definition; a missing definition leaves a visible empty form. */
 function toFormNode(
   node: ApiNode,
   definitions: ReadonlyMap<string, ApiForm>,
@@ -109,6 +112,7 @@ function toFormNode(
   };
 }
 
+/** Extracts top-level fields, required flags, and title → UI-label → key label fallbacks. */
 function toFields(definition: ApiForm): FormField[] {
   const schema = definition.field_schema;
   const required = new Set(schema?.required ?? []);
@@ -123,6 +127,7 @@ function toFields(definition: ApiForm): FormField[] {
   }));
 }
 
+/** Makes a display hint from JSON Schema types; missing or empty type lists become unknown. */
 function schemaTypeLabel(type: string | string[] | undefined): string {
   const names = type === undefined ? [] : [type].flat();
   return names.length > 0 ? names.join(' | ') : 'unknown';
@@ -141,6 +146,10 @@ function collectUiLabels(
   return labels;
 }
 
+/**
+ * Resolves a fragment pointing to one top-level property, including an empty property key.
+ * URI decoding precedes JSON Pointer decoding; nested paths and malformed URI escapes are ignored.
+ */
 function fieldKeyFromScope(scope: string | undefined): string | undefined {
   if (!scope?.startsWith('#')) return undefined;
   try {
@@ -155,6 +164,10 @@ function fieldKeyFromScope(scope: string | undefined): string | undefined {
   }
 }
 
+/**
+ * Imports supported expressions for existing target fields and warns about other mappings.
+ * Source availability is checked later by providers, so stale sources remain repairable.
+ */
 function toFormPrefill(node: ApiNode, form: FormNode, warnings: string[]): FormPrefill {
   const fieldKeys = new Set(form.fields.map((field) => field.key));
   const formPrefill = new Map<string, PrefillSource>();

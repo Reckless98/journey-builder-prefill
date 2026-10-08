@@ -24,7 +24,7 @@ export interface ResolvedOption {
 /**
  * Asks every provider what it offers for `context.form`: one section per provider, in order.
  *
- * Two rules hold for the result whatever the providers return, and the picker and
+ * Two rules hold for well-formed provider outputs, and the picker and
  * `indexOptions` rely on both:
  * - a form field is only offered while it exists upstream of the form,
  * - a source is offered once, by the first provider that returns it.
@@ -35,6 +35,7 @@ export function buildSections(
 ): PrefillSection[] {
   const upstreamFields = upstreamFieldSourceIds(context);
   const offered = new Set<string>();
+  // Enforce upstream validity before claiming the identity, so an invalid offer cannot win.
   const accept = (option: PrefillOption) => {
     const id = sourceId(option.source);
     if (option.source.type === FORM_FIELD_SOURCE && !upstreamFields.has(id)) return false;
@@ -106,6 +107,7 @@ export function filterSections(
   const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
   if (terms.length === 0) return sections;
 
+  // Terms may match different parts of the same group/label/key description.
   const matches = (option: PrefillOption, group: PrefillOptionGroup) => {
     const haystack = `${group.label} ${option.label} ${option.source.key}`.toLowerCase();
     return terms.every((term) => haystack.includes(term));
