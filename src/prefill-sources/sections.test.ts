@@ -96,6 +96,32 @@ describe('buildSections', () => {
     expect(first?.groups[0]?.options).toHaveLength(8);
     expect(second?.groups).toEqual([]);
   });
+
+  it('filters stale form-field favorites from a fourth provider while keeping valid favorites', () => {
+    const favorites: PrefillSourceProvider = {
+      id: 'favorites',
+      label: 'Saved favorites',
+      getGroups: () => [
+        {
+          id: 'saved',
+          label: 'Favorites',
+          options: [
+            { source: formFieldSource(MOCK_FORM_ID.A, 'email'), label: 'Upstream email' },
+            { source: formFieldSource(MOCK_FORM_ID.F, 'email'), label: 'Downstream email' },
+            { source: formFieldSource(MOCK_FORM_ID.D, 'email'), label: 'Own email' },
+            { source: formFieldSource(MOCK_FORM_ID.A, 'removed'), label: 'Removed field' },
+          ],
+        },
+      ],
+    };
+    const sections = buildSections([favorites, ...allPrefillProviders], contextFor('Form D'));
+    const favoriteOptions = sections[0]?.groups[0]?.options;
+
+    expect(favoriteOptions?.map((option) => option.label)).toEqual(['Upstream email']);
+    expect(indexOptions(sections).has(sourceId(formFieldSource(MOCK_FORM_ID.F, 'email')))).toBe(
+      false,
+    );
+  });
 });
 
 describe('indexOptions', () => {
