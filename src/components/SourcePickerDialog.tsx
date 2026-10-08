@@ -76,10 +76,8 @@ export function SourcePickerDialog({
       ref={dialogRef}
       aria-labelledby={titleId}
       onClose={onClose}
-      // A click that lands on the dialog element itself is a click on the backdrop.
-      onClick={(event) => {
-        if (event.target === event.currentTarget) close();
-      }}
+      // Light dismiss: also close on a click outside the dialog, where the browser supports it.
+      closedby="any"
       className="m-auto w-[min(40rem,calc(100vw-2rem))] max-w-none rounded-2xl bg-white p-0 text-slate-900 shadow-2xl backdrop:bg-slate-900/50"
     >
       <form onSubmit={handleSubmit} className="flex max-h-[min(44rem,calc(100dvh-2rem))] flex-col">
