@@ -32,7 +32,6 @@ export function apiResponse(parts: Partial<BlueprintGraphResponse> = {}): Bluepr
 export function apiForm(id: string, fieldKeys: string[] = ['email', 'name']): ApiForm {
   return {
     id,
-    name: `${id} definition`,
     field_schema: {
       properties: Object.fromEntries(
         fieldKeys.map((key) => [key, { avantos_type: 'short-text', title: key, type: 'string' }]),

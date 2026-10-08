@@ -36,7 +36,6 @@ export function buildBlueprint(nodes: Record<string, NodeSpec>): Blueprint {
       id,
       name: spec.name ?? `Form ${id.toUpperCase()}`,
       definitionId: 'f_shared',
-      definitionName: 'Shared definition',
       fields: (spec.fields ?? ['email', 'name']).map((key) => ({
         key,
         label: key.charAt(0).toUpperCase() + key.slice(1),

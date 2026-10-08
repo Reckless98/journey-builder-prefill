@@ -1,13 +1,10 @@
 import type { DependencyMap } from './types';
 
 /**
- * Upstream traversal of the blueprint DAG.
+ * Upstream traversal of the blueprint graph. An edge `source → target` means `target` depends
+ * on `source`, so dependencies are found by walking from a node towards the sources.
  *
- * "Upstream" means against the direction of the API's edges: an edge `source → target` says
- * `target` depends on `source`, so the dependencies of a node are found by walking from it
- * towards the sources.
- *
- * Both functions tolerate malformed input rather than trusting it:
+ * The graph comes from an API, so both functions tolerate what a DAG should not contain:
  * - ids that are not nodes of the graph are ignored,
  * - a node is never reported as its own dependency (self-loops, cycles),
  * - every node is reported at most once (diamonds, duplicate edges),

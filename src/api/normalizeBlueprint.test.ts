@@ -50,7 +50,6 @@ describe('normalizeBlueprint with the mock server response', () => {
   it('reads the fields of a form from its definition, in schema order', () => {
     const formA = blueprint.forms.find((form) => form.id === MOCK_FORM_ID.A);
 
-    expect(formA?.definitionName).toBe('test form');
     expect(formA?.fields).toEqual([
       { key: 'button', label: 'Button', type: 'button', required: false },
       {
@@ -256,6 +255,32 @@ describe('normalizeBlueprint', () => {
       { key: 'labelled', label: 'From UI schema', type: 'short-text', required: false },
       { key: 'nested', label: 'From nested layout', type: 'string', required: false },
       { key: 'bare', label: 'bare', type: 'unknown', required: false },
+    ]);
+  });
+
+  it('shows a JSON Schema type list as the field type when there is no Avantos type', () => {
+    const blueprint = normalizeBlueprint(
+      apiResponse({
+        nodes: [apiNode('a', 'Form A', 'f')],
+        forms: [
+          {
+            id: 'f',
+            field_schema: {
+              properties: {
+                nickname: { type: ['string', 'null'] },
+                age: { avantos_type: 'number', type: ['integer', 'null'] },
+                empty: { type: [] },
+              },
+            },
+          },
+        ],
+      }),
+    );
+
+    expect(blueprint.forms[0]?.fields.map((field) => field.type)).toEqual([
+      'string | null',
+      'number',
+      'unknown',
     ]);
   });
 

@@ -22,32 +22,22 @@ export interface ResolvedOption {
 }
 
 /**
- * Asks every provider what it offers for `context.form`. One section per provider, in order.
+ * Asks every provider what it offers for `context.form`: one section per provider, in order.
  *
- * Form-field sources must still exist upstream, even when offered by a custom provider.
- * Each source is offered once: when two providers return the same source, the earlier one
- * keeps it. Source ids are therefore unique across all sections, which the picker and
- * `indexOptions` rely on.
+ * Two rules hold for the result whatever the providers return, and the picker and
+ * `indexOptions` rely on both:
+ * - a form field is only offered while it exists upstream of the form,
+ * - a source is offered once, by the first provider that returns it.
  */
 export function buildSections(
   providers: readonly PrefillSourceProvider[],
   context: PrefillContext,
 ): PrefillSection[] {
-  const upstream = new Set([
-    ...getDirectDependencies(context.blueprint.dependencies, context.form.id),
-    ...getTransitiveDependencies(context.blueprint.dependencies, context.form.id),
-  ]);
-  const eligibleFormSources = new Set(
-    context.blueprint.forms
-      .filter((form) => upstream.has(form.id))
-      .flatMap((form) => form.fields.map((field) => sourceId(formFieldSource(form.id, field.key)))),
-  );
+  const upstreamFields = upstreamFieldSourceIds(context);
   const offered = new Set<string>();
-  const isFirstOffer = (option: PrefillOption) => {
+  const accept = (option: PrefillOption) => {
     const id = sourceId(option.source);
-    // Availability is also used to resolve stored mappings. A provider such as favorites can
-    // hold stale pointers, so it cannot bypass the graph or resurrect a removed field.
-    if (option.source.type === FORM_FIELD_SOURCE && !eligibleFormSources.has(id)) return false;
+    if (option.source.type === FORM_FIELD_SOURCE && !upstreamFields.has(id)) return false;
     if (offered.has(id)) return false;
     offered.add(id);
     return true;
@@ -56,19 +46,41 @@ export function buildSections(
   return providers.map((provider) => ({
     providerId: provider.id,
     label: provider.label,
-    groups: provider
-      .getGroups(context)
-      .map((group) => ({ ...group, options: group.options.filter(isFirstOffer) }))
-      .filter((group) => group.options.length > 0),
+    groups: keepOptions(provider.getGroups(context), accept),
   }));
+}
+
+/** Source ids of every field of every form upstream of `context.form`. */
+function upstreamFieldSourceIds({ blueprint, form }: PrefillContext): Set<string> {
+  const upstream = new Set([
+    ...getDirectDependencies(blueprint.dependencies, form.id),
+    ...getTransitiveDependencies(blueprint.dependencies, form.id),
+  ]);
+  return new Set(
+    blueprint.forms
+      .filter((candidate) => upstream.has(candidate.id))
+      .flatMap((candidate) =>
+        candidate.fields.map((field) => sourceId(formFieldSource(candidate.id, field.key))),
+      ),
+  );
+}
+
+/** Keeps the options that pass `keep` and drops the groups left without any. */
+function keepOptions(
+  groups: readonly PrefillOptionGroup[],
+  keep: (option: PrefillOption, group: PrefillOptionGroup) => boolean,
+): PrefillOptionGroup[] {
+  return groups
+    .map((group) => ({ ...group, options: group.options.filter((option) => keep(option, group)) }))
+    .filter((group) => group.options.length > 0);
 }
 
 /**
  * Source id → option, for every option on offer.
  *
  * A stored mapping is valid for a form exactly when its source is in this index. Lookup is by
- * source identity, never by label, so "Email" of one form cannot stand in for "Email" of another
- * and a mapping whose source is no longer upstream resolves to nothing.
+ * source identity, never by label, so a mapping whose source is no longer on offer resolves to
+ * nothing.
  */
 export function indexOptions(sections: readonly PrefillSection[]): Map<string, ResolvedOption> {
   const index = new Map<string, ResolvedOption>();
@@ -84,9 +96,8 @@ export function indexOptions(sections: readonly PrefillSection[]): Map<string, R
 
 /**
  * Narrows sections to the options matching a search. Every whitespace-separated term must
- * appear somewhere in the group label, option label or source key, ignoring case, so
- * "client email" finds the contact email of the client organization. Sections are kept even
- * when nothing in them matches.
+ * appear in the group label, option label or source key, ignoring case. Sections are kept
+ * even when nothing in them matches.
  */
 export function filterSections(
   sections: readonly PrefillSection[],
@@ -95,18 +106,13 @@ export function filterSections(
   const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
   if (terms.length === 0) return sections;
 
-  const matches = (group: PrefillOptionGroup, option: PrefillOption) => {
+  const matches = (option: PrefillOption, group: PrefillOptionGroup) => {
     const haystack = `${group.label} ${option.label} ${option.source.key}`.toLowerCase();
     return terms.every((term) => haystack.includes(term));
   };
 
   return sections.map((section) => ({
     ...section,
-    groups: section.groups
-      .map((group) => ({
-        ...group,
-        options: group.options.filter((option) => matches(group, option)),
-      }))
-      .filter((group) => group.options.length > 0),
+    groups: keepOptions(section.groups, matches),
   }));
 }

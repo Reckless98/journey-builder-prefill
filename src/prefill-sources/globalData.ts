@@ -2,7 +2,7 @@ import type { PrefillSource } from '../domain/types';
 import type { PrefillSourceProvider } from './types';
 
 /** Source `type` for a property of a global object, which is available to every form. */
-export const GLOBAL_SOURCE = 'global';
+const GLOBAL_SOURCE = 'global';
 
 export interface GlobalDataSet {
   /** Becomes the `ownerId` of the sources, so it must be unique among data sets. */
@@ -16,11 +16,10 @@ export function globalSource(dataSetId: string, propertyKey: string): PrefillSou
 }
 
 /**
- * Example global data. The assignment leaves the content of global data open and the graph
- * endpoint does not describe any, so these two sets are static and exist to show a provider
- * that has nothing to do with the form graph.
+ * Example global data. The assignment leaves its content open and the graph endpoint describes
+ * none, so these sets are static. They show a provider that does not depend on the form graph.
  */
-export const EXAMPLE_GLOBAL_DATA: readonly GlobalDataSet[] = [
+const EXAMPLE_GLOBAL_DATA: readonly GlobalDataSet[] = [
   {
     id: 'action',
     label: 'Action Properties',

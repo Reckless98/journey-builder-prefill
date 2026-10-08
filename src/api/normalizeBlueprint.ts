@@ -105,7 +105,6 @@ function toFormNode(
     id: node.id,
     name: node.data.name,
     definitionId: node.data.component_id,
-    definitionName: definition?.name,
     fields: definition ? toFields(definition) : [],
   };
 }
@@ -119,9 +118,14 @@ function toFields(definition: ApiForm): FormField[] {
   return Object.entries(schema?.properties ?? {}).map(([key, property]) => ({
     key,
     label: property.title ?? uiLabels.get(key) ?? key,
-    type: property.avantos_type ?? property.type ?? 'unknown',
+    type: property.avantos_type ?? schemaTypeLabel(property.type),
     required: required.has(key),
   }));
+}
+
+function schemaTypeLabel(type: string | string[] | undefined): string {
+  const names = type === undefined ? [] : [type].flat();
+  return names.length > 0 ? names.join(' | ') : 'unknown';
 }
 
 /** Field key → label from the UI schema, used for fields whose schema property has no title. */
@@ -163,10 +167,10 @@ function toFormPrefill(node: ApiNode, form: FormNode, warnings: string[]): FormP
 /**
  * Reads one `input_mapping` expression as a prefill source.
  *
- * The schema allows some thirty expression types here and the mock data contains none, so only
- * the one type that unambiguously addresses a value of another component in the same blueprint
- * is interpreted: `action_component_data`, with `component_key` and `output_key`. Whether the
- * source is still a valid dependency is decided later, against the graph.
+ * The schema allows more than thirty expression types here and the mock data contains none, so
+ * only the type that unambiguously addresses a value of another component is interpreted:
+ * `action_component_data`, with `component_key` and `output_key`. Whether that source is still
+ * upstream of the form is decided later, against the graph.
  */
 function toPrefillSource(expression: ApiExpression): PrefillSource | undefined {
   const { type, component_key: nodeId, output_key: fieldKey, is_metadata: isMetadata } = expression;

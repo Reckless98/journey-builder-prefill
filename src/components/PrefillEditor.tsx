@@ -20,9 +20,8 @@ interface PrefillEditorProps {
 /**
  * Shows and edits the prefill configuration of one form.
  *
- * The providers are consulted once here. Their answer, as plain sections, serves two purposes:
- * describing the mappings that already exist and filling the picker. Nothing below this point
- * knows which kinds of source exist.
+ * Providers are consulted once, here. The resulting sections both describe the mappings that
+ * exist and fill the picker, so nothing below knows which kinds of source exist.
  *
  * Render with `key={form.id}` so the open-picker state does not carry over between forms.
  */

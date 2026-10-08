@@ -89,6 +89,18 @@ describe('fetchBlueprintGraph', () => {
     await expect(fetchBlueprintGraph(url)).resolves.toEqual(body);
   });
 
+  it('accepts a field whose JSON Schema type is a list of type names', async () => {
+    const body = {
+      ...apiResponse(),
+      forms: [
+        { id: 'f', field_schema: { properties: { nickname: { type: ['string', 'null'] } } } },
+      ],
+    };
+    stubFetch(() => Promise.resolve(Response.json(body)));
+
+    await expect(fetchBlueprintGraph(url)).resolves.toEqual(body);
+  });
+
   it.each([
     ['a null node', { ...apiResponse(), nodes: [null] }],
     ['missing node data', { ...apiResponse(), nodes: [{ id: 'a', type: 'form' }] }],
@@ -101,6 +113,13 @@ describe('fetchBlueprintGraph', () => {
     [
       'a null field property',
       { ...apiResponse(), forms: [{ id: 'f', field_schema: { properties: { email: null } } }] },
+    ],
+    [
+      'a field type that is neither a name nor a list of names',
+      {
+        ...apiResponse(),
+        forms: [{ id: 'f', field_schema: { properties: { email: { type: 42 } } } }],
+      },
     ],
     [
       'an invalid required list',

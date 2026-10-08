@@ -19,9 +19,9 @@ const LOADING: BlueprintState = { status: 'loading' };
 /**
  * Loads a blueprint and exposes it as a loading / error / ready state, with a `retry`.
  *
- * The outcome is stored together with the request it belongs to, and "loading" is derived:
- * we are loading whenever the stored outcome is not for the current request. That way a new
- * request never shows the previous one's data and nothing has to be reset by hand.
+ * The outcome is stored with the request it belongs to and "loading" is derived: the hook is
+ * loading whenever the stored outcome is not for the current request. A new request therefore
+ * never shows the previous one's data, and nothing is reset by hand.
  */
 export function useBlueprint(request: BlueprintRequest): {
   state: BlueprintState;
@@ -29,8 +29,8 @@ export function useBlueprint(request: BlueprintRequest): {
 } {
   const url = buildBlueprintGraphUrl(request);
   const [attempt, setAttempt] = useState(0);
-  // A → B → A is a new load, even if B has not settled. Comparing only the URL and attempt
-  // would reuse A's old outcome and mount an editor with stale initial mappings.
+  // A new object for every URL or attempt change. Comparing by value would treat A → B → A as
+  // the original A and reuse its outcome while the new load is still pending.
   const requestKey = useMemo(() => ({ url, attempt }), [url, attempt]);
   const [settled, setSettled] = useState<{ requestKey: typeof requestKey; outcome: Outcome }>();
 

@@ -8,6 +8,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 const isString: Check = (value) => typeof value === 'string';
 const optionalString: Check = (value) => value === undefined || isString(value);
+const optionalTypeNames: Check = (value) =>
+  optionalString(value) || (Array.isArray(value) && value.every(isString));
 
 function nullableArray(value: unknown, check: Check): boolean {
   return value === null || (Array.isArray(value) && value.every(check));
@@ -44,7 +46,11 @@ function isEdge(value: unknown): boolean {
 }
 
 function isFieldProperty(value: unknown): boolean {
-  return isRecord(value) && [value.title, value.type, value.avantos_type].every(optionalString);
+  return (
+    isRecord(value) &&
+    [value.title, value.avantos_type].every(optionalString) &&
+    optionalTypeNames(value.type)
+  );
 }
 
 function isFieldSchema(value: unknown): boolean {
@@ -78,7 +84,6 @@ function isForm(value: unknown): boolean {
   return (
     isRecord(value) &&
     isString(value.id) &&
-    optionalString(value.name) &&
     isFieldSchema(value.field_schema) &&
     isUiSchema(value.ui_schema)
   );

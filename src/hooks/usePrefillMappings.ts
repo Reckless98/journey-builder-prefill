@@ -3,11 +3,9 @@ import { clearMapping, setMapping } from '../domain/mappings';
 import type { PrefillMappings, PrefillSource } from '../domain/types';
 
 /**
- * The editable prefill mappings of a blueprint, held in React state.
- *
- * All the logic lives in the pure functions of `domain/mappings`; this hook only binds them to
- * state. Updates use the functional form of the setter, so the callbacks are stable and never
- * act on a stale copy of the mappings.
+ * The editable prefill mappings of a blueprint, held in React state. The logic lives in the
+ * pure functions of `domain/mappings`; functional updates keep the callbacks stable and free
+ * of stale state.
  */
 export function usePrefillMappings(initial: PrefillMappings) {
   const [mappings, setMappings] = useState(initial);
